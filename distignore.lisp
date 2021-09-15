@@ -16,15 +16,15 @@
 
 
 (defun read-distignore-predicate (path)
-  (when-let ((distignore-file (probe-file (merge-pathnames ".distignore"
-                                                           (uiop:ensure-directory-pathname path)))))
+  (when-let ((distignore-file (uiop:probe-file*
+                               (merge-pathnames ".distignore"
+                                                (uiop:ensure-directory-pathname path)))))
     (labels ((trim-string (string)
                (let ((string (if-let (pos (position #\# string))
                                (subseq string 0 pos)
                                string)))
                  (string-trim '(#\Tab #\Space #\Newline) string))))
-      (let* ((regexes (split-sequence:split-sequence #\Newline
-                                                     (read-file-into-string distignore-file)))
+      (let* ((regexes (ppcre:split "[\\n\\r]+" (read-file-into-string distignore-file)))
              (scanners (mapcar #'ppcre:create-scanner (remove-if #'emptyp
                                                                  (mapcar #'trim-string regexes)))))
         (lambda (string)
